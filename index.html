@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VETO | Self-Advocacy Engine</title>
-    <!-- Include html2pdf library for client-side PDF generation -->
+    <meta name="theme-color" content="#0a0a0a">
+    <title>VETO | Academic Override Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
@@ -12,36 +12,32 @@
             --text: #f4f4f4;
             --accent: #ff3333;
             --border: #333;
+            --card-bg: #121212;
         }
         body {
             font-family: 'Courier New', Courier, monospace;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 2rem;
+            padding: 1.5rem;
             display: flex;
             justify-content: center;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
         }
-        h1 {
+        header {
             border-bottom: 2px solid var(--accent);
-            padding-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        .intro {
-            color: #888;
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
-        .tabs {
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            justify-content: space-between;
+            align-items: center;
         }
+        h1 { margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 1.6rem; }
+        .badge { background: var(--accent); color: var(--bg); padding: 2px 8px; font-weight: bold; font-size: 0.8rem; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
         .tab {
             background: transparent;
             border: 1px solid var(--border);
@@ -50,38 +46,28 @@
             cursor: pointer;
             flex: 1;
             font-family: inherit;
-            font-size: 0.9rem;
-            transition: all 0.2s;
+            font-size: 0.85rem;
+            text-transform: uppercase;
         }
-        .tab.active {
-            background: var(--accent);
-            color: var(--bg);
-            font-weight: bold;
+        .tab.active { background: var(--accent); color: var(--bg); font-weight: bold; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        
+        /* Interactive Node Tree */
+        .node-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .node-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            padding: 15px;
+            cursor: pointer;
+            transition: border-color 0.2s;
         }
-        .panel {
-            display: none;
-        }
-        .panel.active {
-            display: block;
-        }
-        .map-node {
-            border-left: 2px solid var(--accent);
-            padding-left: 15px;
-            margin-bottom: 20px;
-            background: rgba(255, 51, 51, 0.05);
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-            display: flex;
-            flex-direction: column;
-        }
-        label {
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-            color: var(--accent);
-        }
+        .node-card:hover, .node-card.selected { border-color: var(--accent); }
+        .node-title { color: var(--accent); font-weight: bold; margin-bottom: 5px; }
+        .node-desc { font-size: 0.85rem; color: #aaa; }
+        
+        .form-group { margin-bottom: 1.2rem; display: flex; flex-direction: column; }
+        label { margin-bottom: 0.4rem; font-weight: bold; color: var(--accent); font-size: 0.9rem; }
         input, select {
             background: transparent;
             border: 1px solid var(--border);
@@ -90,28 +76,37 @@
             font-family: inherit;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.3s;
         }
-        input:focus, select:focus {
-            border-color: var(--accent);
+        input:focus, select:focus { border-color: var(--accent); }
+        
+        /* Canvas Pad */
+        canvas#sig-canvas {
+            border: 1px dashed var(--border);
+            background: #151515;
+            cursor: crosshair;
+            touch-action: none;
         }
+        .canvas-controls { display: flex; justify-content: space-between; margin-top: 5px; }
+        .btn-sm { background: #333; color: white; border: none; padding: 5px 10px; cursor: pointer; font-family: inherit; }
+
         button.action-btn {
             background-color: var(--accent);
             color: var(--bg);
             border: none;
-            padding: 15px 20px;
-            font-size: 1.1rem;
+            padding: 15px;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
             width: 100%;
             margin-top: 1rem;
-            transition: background 0.3s;
         }
-        button.action-btn:hover {
-            background-color: #ff6666;
-        }
-        /* Hidden layout specifically for the PDF render */
+        button.action-btn:hover { background-color: #ff6666; }
+
+        /* Saved History Section */
+        .history-list { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+        .history-item { display: flex; justify-content: space-between; background: var(--card-bg); padding: 10px; margin-bottom: 8px; font-size: 0.85rem; }
+
         #pdf-render-zone {
             display: none;
             background: white;
@@ -120,32 +115,45 @@
             font-family: 'Times New Roman', Times, serif;
             line-height: 1.6;
         }
-        .pdf-header { text-align: center; font-weight: bold; margin-bottom: 30px; text-decoration: underline; font-size: 1.2rem; }
-        .pdf-date { text-align: right; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>VETO System_</h1>
-    <p class="intro">Institutional override sequence initiated. Generate policy-backed administrative requests.</p>
+    <header>
+        <h1>VETO System_</h1>
+        <span class="badge">OFFLINE PWA v3.0</span>
+    </header>
 
     <div class="tabs">
         <button class="tab active" id="tab-map" onclick="switchTab('map')">1. Shadow Map</button>
         <button class="tab" id="tab-engine" onclick="switchTab('engine')">2. Override Engine</button>
+        <button class="tab" id="tab-history" onclick="switchTab('history')">3. Case History</button>
     </div>
 
-    <!-- Panel 1: Shadow Map -->
+    <!-- Panel 1: Interactive Shadow Map -->
     <div id="panel-map" class="panel active">
-        <h3 style="color: var(--accent);">Hidden Academic Pathways</h3>
-        <div class="map-node">
-            <strong>0/7 Period Stacking:</strong> Bypass standard course limits by petitioning for extended bell schedules. Allows recovery of up to 20 credits per academic year.
+        <h3 style="color: var(--accent); margin-top: 0;">Interactive Academic Pathways</h3>
+        <p style="color: #888; font-size: 0.85rem;">Select an institutional bypass node to inspect policy specs:</p>
+        
+        <div class="node-container">
+            <div class="node-card" onclick="inspectNode('07period')">
+                <div class="node-title">0/7 Period Stacking</div>
+                <div class="node-desc">Extend bell schedule to take 8 classes per term.</div>
+            </div>
+            <div class="node-card" onclick="inspectNode('dualenroll')">
+                <div class="node-title">Dual-Enrollment Loop</div>
+                <div class="node-desc">Enroll at Rio Hondo College concurrently to bypass prerequisites.</div>
+            </div>
+            <div class="node-card" onclick="inspectNode('audit')">
+                <div class="node-title">Foreign Credit Audit</div>
+                <div class="node-desc">Mandate evaluation of international coursework via state rubrics.</div>
+            </div>
         </div>
-        <div class="map-node">
-            <strong>Dual-Enrollment (College Level):</strong> Concurrent enrollment at institutions like Rio Hondo College bypasses high school prerequisite traps and earns weighted college credits.
-        </div>
-        <div class="map-node">
-            <strong>International Transcript Audit:</strong> Mandate a formal equivalency rubric evaluation for foreign middle and high school coursework to eliminate artificial credit deficits.
+
+        <div id="node-inspector" style="background: var(--card-bg); border-left: 3px solid var(--accent); padding: 15px; display: none;">
+            <h4 id="node-inspect-title" style="margin: 0 0 10px 0; color: var(--accent);"></h4>
+            <p id="node-inspect-body" style="margin: 0; font-size: 0.9rem; line-height: 1.5;"></p>
         </div>
     </div>
 
@@ -155,12 +163,10 @@
             <label>Student Full Name</label>
             <input type="text" id="studentName" placeholder="e.g. Yosafat Solaiman">
         </div>
-        
         <div class="form-group">
             <label>Counselor / Administrator Name</label>
             <input type="text" id="counselorName" placeholder="e.g. Mr. Smith">
         </div>
-
         <div class="form-group">
             <label>Administrative Barrier</label>
             <select id="barrierType">
@@ -170,50 +176,109 @@
             </select>
         </div>
 
-        <button class="action-btn" onclick="generatePetition()">Generate Legal Petition</button>
+        <div class="form-group">
+            <label>Digital Signature</label>
+            <canvas id="sig-canvas" width="500" height="120"></canvas>
+            <div class="canvas-controls">
+                <button class="btn-sm" onclick="clearCanvas()">Clear Signature</button>
+            </div>
+        </div>
+
+        <button class="action-btn" onclick="generatePetition()">Compile & Download Petition</button>
+    </div>
+
+    <!-- Panel 3: Local Case History -->
+    <div id="panel-history" class="panel">
+        <h3 style="color: var(--accent); margin-top: 0;">Local Saved Cases</h3>
+        <div id="history-container" class="history-list"></div>
+        <button class="btn-sm" style="margin-top: 10px;" onclick="clearHistory()">Clear History</button>
     </div>
 </div>
 
-<!-- Hidden zone converted to PDF -->
+<!-- Hidden Zone for PDF Generation -->
 <div id="pdf-render-zone">
-    <div class="pdf-header">FORMAL ADMINISTRATIVE PETITION</div>
-    <div class="pdf-date" id="pdfDate"></div>
+    <div style="text-align: center; font-weight: bold; font-size: 1.2rem; text-decoration: underline; margin-bottom: 20px;">FORMAL ADMINISTRATIVE PETITION</div>
+    <div style="text-align: right;" id="pdfDate"></div>
     <p><strong>To:</strong> <span id="pdfCounselor"></span>, Counseling Department</p>
     <p><strong>From:</strong> <span id="pdfStudent"></span></p>
     <p><strong>Subject:</strong> Formal Request for Academic Pathway Adjustment</p>
-    
-    <div id="pdfBody" style="margin-top: 20px; margin-bottom: 20px; text-align: justify;"></div>
-
-    <p>I respectfully request a formal meeting within three business days to execute this schedule adjustment. Please place a copy of this written request in my permanent student record.</p>
+    <div id="pdfBody" style="margin: 20px 0; text-align: justify;"></div>
+    <p>I respectfully request a formal meeting within three business days to execute this schedule adjustment. Please place a copy of this written request in my permanent student file.</p>
     <br><br>
     <p>Signed,</p>
-    <br>
-    <p>___________________________</p>
+    <img id="pdfSigImg" style="max-height: 50px; display: block; margin-bottom: 5px;" />
     <p><span id="pdfStudentSignature"></span></p>
 </div>
 
 <script>
+    // Embedded Policy Payload Database
     const policyPayloads = {
-        eld: "I am writing to formally request immediate reclassification from the English Language Development (ELD) track into mainstream English literature courses. Continued retention in ELD is actively obstructing my ability to meet A-G college graduation requirements. Under state educational equity guidelines, language learners who demonstrate adequate academic proficiency cannot be indefinitely held in remedial tracks that delay graduation.",
-        credits: "I am writing to formally request a complete audit and integration of my international middle/high school transcripts. The current refusal to map these credits forces me into an artificial credit deficit. I request that these courses be evaluated against standard equivalency rubrics immediately so I may pursue a rigorous, grade-level appropriate schedule.",
+        eld: "I am writing to formally request immediate reclassification from the English Language Development (ELD) track into mainstream English literature courses. Continued retention in ELD actively obstructs my ability to meet A-G college graduation requirements. Under state educational equity guidelines (California Education Code § 60810 / EC § 51225.3), language learners who demonstrate academic proficiency cannot be indefinitely held in remedial tracks that delay graduation.",
+        credits: "I am writing to formally request a complete audit and integration of my international middle and high school transcripts. The current refusal to map these credits forces an artificial credit deficit. Under California Education Code guidelines for incoming immigrant youth, I request that these courses be evaluated against standard equivalency rubrics immediately to place me in grade-level appropriate courses.",
         ap: "I am writing to formally request enrollment in Advanced Placement (AP) coursework for the upcoming term. Institutional gatekeeping based on prior remedial tracking or subjective assessment violates principles of academic equity. I am prepared for the rigor of this coursework and require these classes to remain competitive for higher education admissions."
     };
 
+    const nodeDetails = {
+        '07period': "0/7 Period Stacking allows students to take courses before period 1 or after period 6. This adds 10 to 20 additional credits per academic year, completely erasing credit deficits caused by ELD placement.",
+        'dualenroll': "Under CCAP (AB 288), high school students can take college courses at local community colleges like Rio Hondo College for free. Passing one 3-unit college course equals 10 high school credits and bypasses high school prerequisites.",
+        'audit': "Schools often default to giving foreign transcripts 'elective credit' instead of subject credit. Requesting a formal rubric-based audit forces the district to convert overseas math and science courses into core graduation requirements."
+    };
+
+    // Tab Router
     function switchTab(tabId) {
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        
         document.getElementById(`panel-${tabId}`).classList.add('active');
         document.getElementById(`tab-${tabId}`).classList.add('active');
+        if(tabId === 'history') loadHistory();
     }
 
+    // Shadow Map Inspector
+    function inspectNode(key) {
+        const box = document.getElementById('node-inspector');
+        document.getElementById('node-inspect-title').innerText = key.toUpperCase() + " SPECIFICATION";
+        document.getElementById('node-inspect-body').innerText = nodeDetails[key];
+        box.style.display = 'block';
+    }
+
+    // Canvas Pad Script
+    const canvas = document.getElementById('sig-canvas');
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+
+    canvas.addEventListener('mousedown', startDraw);
+    canvas.addEventListener('mouseup', stopDraw);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('touchstart', startDraw);
+    canvas.addEventListener('touchend', stopDraw);
+    canvas.addEventListener('touchmove', draw);
+
+    function startDraw(e) { drawing = true; ctx.beginPath(); draw(e); }
+    function stopDraw() { drawing = false; ctx.beginPath(); }
+    function draw(e) {
+        if(!drawing) return;
+        e.preventDefault();
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+        const y = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+    }
+    function clearCanvas() { ctx.clearRect(0, 0, canvas.width, canvas.height); }
+
+    // Petition PDF Generation & LocalStorage Save
     function generatePetition() {
         const sName = document.getElementById('studentName').value;
         const cName = document.getElementById('counselorName').value;
         const bType = document.getElementById('barrierType').value;
 
         if(!sName || !cName) {
-            alert("System Error: All fields required to generate override payload.");
+            alert("System Error: Student Name and Counselor Name are required.");
             return;
         }
 
@@ -222,20 +287,65 @@
         document.getElementById('pdfStudentSignature').innerText = sName;
         document.getElementById('pdfCounselor').innerText = cName;
         document.getElementById('pdfBody').innerText = policyPayloads[bType];
+        
+        // Attach Signature
+        const sigData = canvas.toDataURL();
+        document.getElementById('pdfSigImg').src = sigData;
 
+        // Render PDF
         const element = document.getElementById('pdf-render-zone');
         element.style.display = 'block';
 
         const opt = {
-            margin:       1,
-            filename:     `${sName.replace(/\s+/g, '_')}_Petition.pdf`,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            margin: 1,
+            filename: `${sName.replace(/\s+/g, '_')}_Petition.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
         };
 
         html2pdf().set(opt).from(element).save().then(() => {
             element.style.display = 'none';
+            saveToHistory(sName, cName, bType);
+        });
+    }
+
+    // Local Storage Audit Log
+    function saveToHistory(student, counselor, barrier) {
+        const history = JSON.parse(localStorage.getItem('veto_cases') || '[]');
+        history.unshift({ student, counselor, barrier, date: new Date().toLocaleDateString() });
+        localStorage.setItem('veto_cases', JSON.stringify(history));
+    }
+
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('veto_cases') || '[]');
+        const container = document.getElementById('history-container');
+        if(history.length === 0) {
+            container.innerHTML = "<p style='color:#666;'>No local case files found.</p>";
+            return;
+        }
+        container.innerHTML = history.map(item => `
+            <div class="history-item">
+                <div><strong>${item.student}</strong> vs ${item.counselor} (${item.barrier.toUpperCase()})</div>
+                <div style="color:var(--accent);">${item.date}</div>
+            </div>
+        `).join('');
+    }
+
+    function clearHistory() {
+        localStorage.removeItem('veto_cases');
+        loadHistory();
+    }
+
+    // Register Inline Service Worker for Full Offline PWA Support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            const swCode = `
+                self.addEventListener('install', e => e.waitUntil(caches.open('veto-v3').then(c => c.addAll(['/']))));
+                self.addEventListener('fetch', e => e.respondWith(caches.match(e.request).then(r => r || fetch(e.request))));
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
         });
     }
 </script>
