@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VETO | Self-Advocacy Engine</title>
+    <!-- Include html2pdf library for client-side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --text: #f4f4f4;
+            --accent: #ff3333;
+            --border: #333;
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .intro {
+            color: #888;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            cursor: pointer;
+            flex: 1;
+            font-family: inherit;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .tab.active {
+            background: var(--accent);
+            color: var(--bg);
+            font-weight: bold;
+        }
+        .panel {
+            display: none;
+        }
+        .panel.active {
+            display: block;
+        }
+        .map-node {
+            border-left: 2px solid var(--accent);
+            padding-left: 15px;
+            margin-bottom: 20px;
+            background: rgba(255, 51, 51, 0.05);
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        input, select {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus {
+            border-color: var(--accent);
+        }
+        button.action-btn {
+            background-color: var(--accent);
+            color: var(--bg);
+            border: none;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            width: 100%;
+            margin-top: 1rem;
+            transition: background 0.3s;
+        }
+        button.action-btn:hover {
+            background-color: #ff6666;
+        }
+        /* Hidden layout specifically for the PDF render */
+        #pdf-render-zone {
+            display: none;
+            background: white;
+            color: black;
+            padding: 40px;
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+        }
+        .pdf-header { text-align: center; font-weight: bold; margin-bottom: 30px; text-decoration: underline; font-size: 1.2rem; }
+        .pdf-date { text-align: right; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>VETO System_</h1>
+    <p class="intro">Institutional override sequence initiated. Generate policy-backed administrative requests.</p>
+
+    <div class="tabs">
+        <button class="tab active" id="tab-map" onclick="switchTab('map')">1. Shadow Map</button>
+        <button class="tab" id="tab-engine" onclick="switchTab('engine')">2. Override Engine</button>
+    </div>
+
+    <!-- Panel 1: Shadow Map -->
+    <div id="panel-map" class="panel active">
+        <h3 style="color: var(--accent);">Hidden Academic Pathways</h3>
+        <div class="map-node">
+            <strong>0/7 Period Stacking:</strong> Bypass standard course limits by petitioning for extended bell schedules. Allows recovery of up to 20 credits per academic year.
+        </div>
+        <div class="map-node">
+            <strong>Dual-Enrollment (College Level):</strong> Concurrent enrollment at institutions like Rio Hondo College bypasses high school prerequisite traps and earns weighted college credits.
+        </div>
+        <div class="map-node">
+            <strong>International Transcript Audit:</strong> Mandate a formal equivalency rubric evaluation for foreign middle and high school coursework to eliminate artificial credit deficits.
+        </div>
+    </div>
+
+    <!-- Panel 2: Override Engine -->
+    <div id="panel-engine" class="panel">
+        <div class="form-group">
+            <label>Student Full Name</label>
+            <input type="text" id="studentName" placeholder="e.g. Yosafat Solaiman">
+        </div>
+        
+        <div class="form-group">
+            <label>Counselor / Administrator Name</label>
+            <input type="text" id="counselorName" placeholder="e.g. Mr. Smith">
+        </div>
+
+        <div class="form-group">
+            <label>Administrative Barrier</label>
+            <select id="barrierType">
+                <option value="eld">Unjustified Retention in ELD (English Language Development)</option>
+                <option value="credits">Refusal to Transfer International Credits</option>
+                <option value="ap">Denial of Access to Advanced Placement (AP) Courses</option>
+            </select>
+        </div>
+
+        <button class="action-btn" onclick="generatePetition()">Generate Legal Petition</button>
+    </div>
+</div>
+
+<!-- Hidden zone converted to PDF -->
+<div id="pdf-render-zone">
+    <div class="pdf-header">FORMAL ADMINISTRATIVE PETITION</div>
+    <div class="pdf-date" id="pdfDate"></div>
+    <p><strong>To:</strong> <span id="pdfCounselor"></span>, Counseling Department</p>
+    <p><strong>From:</strong> <span id="pdfStudent"></span></p>
+    <p><strong>Subject:</strong> Formal Request for Academic Pathway Adjustment</p>
+    
+    <div id="pdfBody" style="margin-top: 20px; margin-bottom: 20px; text-align: justify;"></div>
+
+    <p>I respectfully request a formal meeting within three business days to execute this schedule adjustment. Please place a copy of this written request in my permanent student record.</p>
+    <br><br>
+    <p>Signed,</p>
+    <br>
+    <p>___________________________</p>
+    <p><span id="pdfStudentSignature"></span></p>
+</div>
+
+<script>
+    const policyPayloads = {
+        eld: "I am writing to formally request immediate reclassification from the English Language Development (ELD) track into mainstream English literature courses. Continued retention in ELD is actively obstructing my ability to meet A-G college graduation requirements. Under state educational equity guidelines, language learners who demonstrate adequate academic proficiency cannot be indefinitely held in remedial tracks that delay graduation.",
+        credits: "I am writing to formally request a complete audit and integration of my international middle/high school transcripts. The current refusal to map these credits forces me into an artificial credit deficit. I request that these courses be evaluated against standard equivalency rubrics immediately so I may pursue a rigorous, grade-level appropriate schedule.",
+        ap: "I am writing to formally request enrollment in Advanced Placement (AP) coursework for the upcoming term. Institutional gatekeeping based on prior remedial tracking or subjective assessment violates principles of academic equity. I am prepared for the rigor of this coursework and require these classes to remain competitive for higher education admissions."
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        
+        document.getElementById(`panel-${tabId}`).classList.add('active');
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+    }
+
+    function generatePetition() {
+        const sName = document.getElementById('studentName').value;
+        const cName = document.getElementById('counselorName').value;
+        const bType = document.getElementById('barrierType').value;
+
+        if(!sName || !cName) {
+            alert("System Error: All fields required to generate override payload.");
+            return;
+        }
+
+        document.getElementById('pdfDate').innerText = new Date().toLocaleDateString();
+        document.getElementById('pdfStudent').innerText = sName;
+        document.getElementById('pdfStudentSignature').innerText = sName;
+        document.getElementById('pdfCounselor').innerText = cName;
+        document.getElementById('pdfBody').innerText = policyPayloads[bType];
+
+        const element = document.getElementById('pdf-render-zone');
+        element.style.display = 'block';
+
+        const opt = {
+            margin:       1,
+            filename:     `${sName.replace(/\s+/g, '_')}_Petition.pdf`,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+
+        html2pdf().set(opt).from(element).save().then(() => {
+            element.style.display = 'none';
+        });
+    }
+</script>
+</body>
+</html>
